@@ -1,33 +1,13 @@
-import random
-from sysconfig import get_scheme_names
-
-def ask_for_guess():
-    while True:
-        guess=input('> ')
-
-        if guess.isdecimal():
-            return int(guess)
-        print('Please enter a number between 1 and 100')
+from urllib import response
 
 
-print('Guess the number.')
-print()
-secret_number=random.randint(1,100)
-print('I am thinking of a number between 1 and 100.')
-
-for i in range(10):
-    print(f'You have {10-i} guesses left. Take a guess.')
-    
-    guess=ask_for_guess()
-    if guess==secret_number:
+print('Gullible')
+while True:
+    print('to know how to keep a gullible person busy for hours? Y/N')
+    response=input('> ')
+    if response.lower()=='no' or response.lower()=='n':
         break
-    
-    if guess<secret_number:
-        print('Your guess is too low.')
-    if guess>secret_number:
-        print('Your guess is too high.')
-
-if guess==secret_number:
-    print('Yay! You guessed my number!')
-else:
-    print(f'Game over. The number I was thinking of was {secret_number}')
+    if response.lower()=='yes' or response.lower()=='y':
+        continue
+    print(f'"{response}" is not a valid yes/no response.')
+print('Thank you. Have a nice day!')
