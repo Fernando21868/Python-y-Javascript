@@ -1,10 +1,5 @@
-import os
-import census2010
-
-population=0
-
-for state in census2010.allData:
-    for county in census2010.allData[state]:
-        population+=census2010.allData[state][county]['pop']
-
-print(population)
+import openpyxl
+wb = openpyxl.load_workbook('Python\produceSales.xlsx')
+sheet = wb.active
+sheet.freeze_panes = 'A2' # Freeze the rows above A2.
+wb.save('freezeExample.xlsx')
