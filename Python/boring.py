@@ -1,5 +1,2 @@
-import openpyxl
-wb = openpyxl.load_workbook('Python\produceSales.xlsx')
-sheet = wb.active
-sheet.freeze_panes = 'A2' # Freeze the rows above A2.
-wb.save('freezeExample.xlsx')
+import ezsheets
+ss = ezsheets.Spreadsheet('1p_VkU_u2TLDJKE-P1h0LgyP2Ei7149wQC_MUZXpaibo')
