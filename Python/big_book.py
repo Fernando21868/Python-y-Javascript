@@ -1,162 +1,143 @@
 import random
+from shutil import move
 import sys
-import time
 
-try:
-    import bext
-except ImportError:
-    print('This program requires the bext module, which you')
-    print('can install by following the instructions at')
-    print('https://pypi.org/project/Bext/')
-    sys.exit()
+WIDTH = 40
+HEIGHT = 20
+NUM_ROBOTS = 10
+NUM_TELEPORTS = 2
+NUM_DEAD_ROBOTS = 2
+NUM_WALLS = 100
+EMPTY_SPACE = ' '
+PLAYER = '@'
+ROBOT = 'R'
+DEAD_ROBOT = 'X'
 
-PAUSE_LENGTH = 1
-
-WIDE_FALL_CHANCE = 50
-
-SCREEN_WIDTH = 79
-SCREEN_HEIGHT = 25
-
-X = 0
-Y = 1
-SAND = chr(9617)
-WALL = chr(9608)
-
-HOURGLASS = set()
-
-for i in range(18, 37):
-    HOURGLASS.add((i, 1))
-    HOURGLASS.add((i, 23))
-for i in range(1, 5):
-    HOURGLASS.add((18, i))
-    HOURGLASS.add((36, i))
-    HOURGLASS.add((18, i + 19))
-    HOURGLASS.add((36, i + 19))
-for i in range(8):
-    HOURGLASS.add((19 + i, 5 + i))
-    HOURGLASS.add((35 - i, 5 + i))
-    HOURGLASS.add((25 - i, 13 + i))
-    HOURGLASS.add((29 + i, 13 + i))
-
-INITIAL_SAND = set()
-for y in range(8):
-    for x in range(19 + y, 36 - y):
-        INITIAL_SAND.add((x, y + 4))
+WALL = chr(9617)
 
 
 def main():
-    bext.fg('yellow')
-    bext.clear()
+    print('''Hungry Robots, by Al Sweigart al@inventwithpython.com
 
-    bext.goto(0, 0)
-    print('Ctrl-C to quit.', end='')
+    You are trapped in a maze with hungry robots! You don't know why robots
+    need to eat, but you don't want to find out. The robots are badly
+    programmed and will move directly toward you, even if blocked by walls.
+    You must trick the robots into crashing into each other (or dead robots)
+    without being caught. You have a personal teleporter device, but it only
+    has enough battery for {} trips. Keep in mind, you and robots can slip
+    through the corners of two diagonal walls!
+    '''.format(NUM_TELEPORTS))
+    input('Press Enter to begin...')
 
-    for wall in HOURGLASS:
-        bext.goto(wall[X], wall[Y])
-        print(WALL, end='')
-
+    board = get_new_board()
+    robots = add_robots(board)
+    player_position = get_random_empty_space(board, robots)
     while True:
-        all_sand = list(INITIAL_SAND)
-        for sand in all_sand:
-            bext.goto(sand[X], sand[Y])
-            print(SAND, end='')
+        display_board(board, robots, player_position)
 
-        run_hour_glass_simulation(all_sand)
+        if len(robots) == 0:
+            print('All the robots have crashed into each other and you')
+            print('lived to tell the tale! Good job!')
+            sys.exit()
+
+        player_position = ask_for_player_move(board, robots, player_position)
 
 
-def run_hour_glass_simulation(all_sand):
+def get_new_board():
+    board = {'teleports': NUM_TELEPORTS}
+
+    for x in range(WIDTH):
+        for y in range(HEIGHT):
+            board[(x, y)] = EMPTY_SPACE
+
+    for x in range(WIDTH):
+        board[(x, 0)] = WALL
+        board[(x, HEIGHT-1)] = WALL
+    for y in range(HEIGHT):
+        board[(0, y)] = WALL
+        board[(WIDTH-1, y)] = WALL
+
+    for i in range(NUM_WALLS):
+        x, y = get_random_empty_space(board, [])
+        board[(x, y)] = WALL
+    for i in range(NUM_WALLS):
+        x, y = get_random_empty_space(board, [])
+        board[(x, y)] = DEAD_ROBOT
+    return board
+
+
+def get_random_empty_space(board, robots):
     while True:
-        random.shuffle(all_sand)
-        sand_moved_on_this_step = False
-
-        for i, sand in enumerate(all_sand):
-            if sand[Y] == SCREEN_HEIGHT-1:
-                continue
-
-            no_sand_below = (sand[X], sand[Y]+1)not in all_sand
-            no_wall_below = (sand[X], sand[Y]+1)not in HOURGLASS
-            can_fall_down = no_sand_below and no_wall_below
-
-            if can_fall_down:
-                bext.goto(sand[X], sand[Y])
-                print(' ', end='')
-                bext.goto(sand[X], sand[Y]+1)
-                print(SAND, end='')
-
-                all_sand[i] = (sand[X], sand[Y]+1)
-                sand_moved_on_this_step = True
-            else:
-                below_left = (sand[X]-1, sand[Y]+1)
-                no_sand_below_left = below_left not in all_sand
-                no_wall_below_left = below_left not in HOURGLASS
-                left = (sand[X]-1, sand[Y])
-                no_wall_left = left not in HOURGLASS
-                not_on_left_edge = sand[X] > 0
-                can_fall_left = (
-                    no_sand_below_left and no_wall_below_left and no_wall_left and not_on_left_edge)
-
-                below_right = (sand[X]+1, sand[Y]+1)
-                no_sand_below_right = below_right not in all_sand
-                no_wall_below_right = below_right not in HOURGLASS
-                right = (sand[X]+1, sand[Y])
-                no_wall_right = right not in HOURGLASS
-                not_on_right_edge = sand[X] < SCREEN_WIDTH-1
-                can_fall_right = (
-                    no_sand_below_right and no_wall_below_right and no_wall_right and not_on_right_edge)
-
-                falling_direction = None
-                if can_fall_left and not can_fall_right:
-                    falling_direction = -1
-                elif not can_fall_left and can_fall_right:
-                    falling_direction = 1
-                elif can_fall_left and can_fall_right:
-                    falling_direction = random.choice((-1, 1))
-
-                if random.random()*100 <= WIDE_FALL_CHANCE:
-                    below_two_left = (sand[X]-2, sand[Y]+1)
-                    no_sand_below_two_left = below_two_left not in all_sand
-                    no_wall_below_two_left = below_two_left not in HOURGLASS
-                    not_on_second_to_left_edge = sand[X] > 1
-                    can_fall_two_left = (
-                        can_fall_left and no_sand_below_two_left and no_wall_below_two_left and not_on_second_to_left_edge)
-
-                    below_two_right = (sand[X]+2, sand[Y]+1)
-                    no_sand_below_two_right = below_two_right not in all_sand
-                    no_wall_below_two_right = below_two_right not in HOURGLASS
-                    not_on_second_to_right_edge = sand[X] < SCREEN_WIDTH-2
-                    can_fall_two_right = (
-                        can_fall_right and no_sand_below_two_right and no_wall_below_two_right and not_on_second_to_right_edge)
-
-                    if can_fall_two_left and not can_fall_two_right:
-                        falling_direction = -2
-                    elif not can_fall_two_left and can_fall_two_right:
-                        falling_direction = 2
-                    elif can_fall_two_left and can_fall_two_right:
-                        falling_direction = random.choice((-2, 2))
-
-                if falling_direction == None:
-                    continue
-
-                bext.goto(sand[X], sand[Y])
-                print(' ', end='')
-                bext.goto(sand[X]+falling_direction, sand[Y]+1)
-                print(SAND, end='')
-
-                all_sand[i] = (sand[X]+falling_direction, sand[Y]+1)
-                sand_moved_on_this_step = True
-        sys.stdout.flush()
-        time.sleep(PAUSE_LENGTH)
-
-        if not sand_moved_on_this_step:
-            time.sleep(2)
-            for sand in all_sand:
-                bext.goto(sand[X], sand[Y])
-                print(' ', end='')
+        random_x = random.randint(1, WIDTH-2)
+        random_y = random.randint(1, HEIGHT-2)
+        if is_empty(random_x, random_y, board, robots):
             break
+    return (random_x, random_y)
 
 
-if __name__ == '__main__':
-    try:
-        main()
-    except KeyboardInterrupt:
-        sys.exit()
+def is_empty(x, y, board, robots):
+    return board[(x, y)] == EMPTY_SPACE and (x, y) not in robots
+
+
+def add_robots(board):
+    robots = []
+    for i in range(NUM_ROBOTS):
+        x, y = get_random_empty_space(board, robots)
+        robots.append((x, y))
+    return robots
+
+
+def display_board(board, robots, player_position):
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            if board[(x, y)] == WALL:
+                print(WALL, end='')
+            elif board[(x, y)] == DEAD_ROBOT:
+                print(DEAD_ROBOT, end='')
+            elif (x, y) in player_position:
+                print(PLAYER, end='')
+            elif (x, y) in robots:
+                print(ROBOT, end='')
+            else:
+                print(EMPTY_SPACE, end='')
+        print()
+
+
+def ask_for_player_move(board, robots, player_position):
+    player_x, player_y = player_position
+
+    q = 'Q' if is_empty(player_x-1, player_y-1, board, robots) else ' '
+    w = 'W' if is_empty(player_x-0, player_y-1, board, robots) else ' '
+    e = 'E' if is_empty(player_x+1, player_y-1, board, robots) else ' '
+    d = 'D' if is_empty(player_x+1, player_y+0, board, robots) else ' '
+    c = 'C' if is_empty(player_x+1, player_y+1, board, robots) else ' '
+    x = 'X' if is_empty(player_x+1, player_y+1, board, robots) else ' '
+    z = 'Z' if is_empty(player_x-1, player_y+1, board, robots) else ' '
+    a = 'A' if is_empty(player_x-1, player_y+0, board, robots) else ' '
+    all_moves = (q+w+e+d+c+x+z+a+'S')
+
+    while True:
+        print('Teleports remaining: {}'.format(board['teleports']))
+        print('                    ({}) ({}) ({})'.format(q, w, e))
+        print('                    ({}) (S) ({})'.format(a, d))
+        print('Enter move or QUIT: ({}) ({}) ({})'.format(z, x, c))
+
+        move = input('> ').upper()
+        if move == 'QUIT':
+            print('Thanks for playing!')
+            sys.exit()
+        elif move == 'T' and board['teleports'] > 0:
+            board['teleports'] -= 1
+            return get_random_empty_space(board, robots)
+        elif move != '' and move in all_moves:
+            return {
+                'Q': (player_x-1, player_y-1),
+                'W': (player_x+0, player_y-1),
+                'E': (player_x+1, player_y-1),
+                'D': (player_x+1, player_y+0),
+                'C': (player_x+1, player_y+1),
+                'X': (player_x+0, player_y+1),
+                'Z': (player_x-1, player_y+1),
+                'A': (player_x-1, player_y+0),
+                'S': (player_x, player_y)
+            }[move]
