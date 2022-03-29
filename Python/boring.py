@@ -1,28 +1,44 @@
-import csv
-import os
+import random
 
-os.makedirs('./Python/headerRemoved', exist_ok=True)
+try:
+    import pyperclip
+except ImportError:
+    pass
 
-for csv_file_name in os.listdir('./Python'):
-    if not csv_file_name.endswith('.csv'):
-        continue
 
-    print('Removing header from ' + csv_file_name+'...')
+def main():
+    print('''L3375P34]< (leetspeek)
+By Al Sweigart al@inventwithpython.com
 
-    # TODO: Read the CSV file in (skipping first row)
-    csv_rows = []
-    csv_file_obj = open('./Python/'+csv_file_name)
-    reader_obj = csv.reader(csv_file_obj)
-    for row in reader_obj:
-        if reader_obj.line_num == 1:
-            continue
-        csv_rows.append(row)
-    csv_file_obj.close()
+Enter your leet message:''')
+    english = input('> ')
+    print()
+    leetspeak = englishToLeetspeak(english)
+    print(leetspeak)
 
-    # TODO: Write ou the CSV file
-    csv_file_obj = open(os.path.join(
-        './Python/headerRemoved', csv_file_name), 'w', newline='')
-    csv_writer = csv.writer(csv_file_obj)
-    for row in csv_rows:
-        csv_writer.writerow(row)
-    csv_file_obj.close()
+    try:
+        pyperclip.copy(leetspeak)
+        print('(Copied leetspeak to clipboard.)')
+    except NameError:
+        pass
+
+
+def englishToLeetspeak(message):
+    char_mapping = {
+        'a': ['4', '@', '/-\\'], 'c': ['('], 'd': ['|)'], 'e': ['3'],
+        'f': ['ph'], 'h': [']-[', '|-|'], 'i': ['1', '!', '|'], 'k': [']<'],
+        'o': ['0'], 's': ['$', '5'], 't': ['7', '+'], 'u': ['|_|'],
+        'v': ['\\/']}
+    leetspeak = ''
+    for char in message:
+        if char.lower() in char_mapping and random.random() <= 0.70:
+            posibble_replacements = char_mapping[char.lower()]
+            leet_replacement = random.choice(posibble_replacements)
+            leetspeak += leetspeak+leet_replacement
+        else:
+            leetspeak = leetspeak+char
+    return leetspeak
+
+
+if __name__ == '__main__':
+    main()
