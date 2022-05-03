@@ -1,63 +1,88 @@
-const video = document.getElementById('video');
-const play = document.getElementById('play');
-const stop = document.getElementById('stop');
-const progress = document.getElementById('progress');
-const timestamp = document.getElementById('timestamp');
+const main = document.getElementById('main');
+const addUserBtn = document.getElementById('add-user');
+const doubleBtn = document.getElementById('double');
+const showMillionairesBtn = document.getElementById('show-millionaires');
+const sortBtn = document.getElementById('sort');
+const calculateWealthBtn = document.getElementById('calculate-wealth');
 
-// Play and pause video
-function toggleVideoStatus() {
-  if (video.paused) {
-    video.play();
-  } else {
-    video.pause();
-  }
+let data = [];
+
+getRandomUser();
+getRandomUser();
+getRandomUser();
+
+// Fetch random user and add money
+async function getRandomUser() {
+  const res = await fetch('https://randomuser.me/api');
+  const data = await res.json();
+  const user = data.results[0];
+  const newUser = {
+    name: `${user.name.first} ${user.name.last}`,
+    money: Math.floor(Math.random() * 1_000_000),
+  };
+  addData(newUser);
 }
 
-// update play/pause icon
-function updatePlayIcon() {
-  if (video.paused) {
-    play.innerHTML = '<i class="fa fa-play fa-2x"></i>';
-  } else {
-    play.innerHTML = '<i class="fa fa-pause fa-2x"></i>';
-  }
+// Double everyones money
+function doubleMoney() {
+  data = data.map((user) => {
+    return { ...user, money: user.money * 2 };
+  });
+  updateDom();
 }
 
-// update progress and timestamp
-function updateProgress() {
-  progress.value = (video.currentTime / video.duration) * 100;
-
-  // Get minutes
-  let mins = Math.floor(video.currentTime / 60);
-  if (mins < 10) {
-    mins = '0' + String(mins);
-  }
-
-  let secs = Math.floor(video.currentTime % 60);
-  if (secs < 10) {
-    secs = '0' + String(secs);
-  }
-
-  timestamp.innerHTML = `${mins}:${secs}`;
+// Sort users by richest
+function sortByRichest() {
+  data.sort((a, b) => b.money - a.money);
+  updateDom();
 }
 
-// Set video time to progress
-function setVideoProgress() {
-  video.currentTime = (+progress.value * video.duration) / 100;
+// Filter only millionaires
+function showMillionaires() {
+  data = data.filter((user) => user.money >= 1_000_000);
+  updateDom();
 }
-// Stop video
-function stopVideo() {
-  video.currentTime = 0;
-  video.pause();
+
+// Calculate the total wealth
+function calculateWealth() {
+  const wealth = data.reduce((acc, user) => (acc += user.money), 0);
+
+  const wealthEl = document.createElement('div');
+  wealthEl.innerHTML = `<h3>Total Wealth: <strong>${formatMoney(
+    wealth
+  )}</strong></h3>`;
+  main.appendChild(wealthEl);
+}
+
+// Add new obj to data arr
+function addData(obj) {
+  data.push(obj);
+  updateDom();
+}
+
+// Update DOM
+function updateDom(providedData = data) {
+  // Clear main div
+  main.innerHTML = `<h2><strong>Person</strong>Wealth</h2>`;
+
+  providedData.forEach((item) => {
+    const element = document.createElement('div');
+    element.classList.add('person');
+    element.innerHTML = `<strong>${item.name}</strong> ${formatMoney(
+      item.money
+    )}`;
+    main.appendChild(element);
+  });
+}
+
+// Form number as money
+function formatMoney(number) {
+  return '$' + number.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
 }
 
 // Event listeners
-video.addEventListener('click', toggleVideoStatus);
-video.addEventListener('pause', updatePlayIcon);
-video.addEventListener('play', updatePlayIcon);
-video.addEventListener('timeupdate', updateProgress);
-
-play.addEventListener('click', toggleVideoStatus);
-
-stop.addEventListener('click', stopVideo);
-
-progress.addEventListener('change', setVideoProgress);
+addUserBtn.addEventListener('click', getRandomUser);
+doubleBtn.addEventListener('click', doubleMoney);
+sortBtn.addEventListener('click', sortByRichest);
+showMillionairesBtn.addEventListener('click', showMillionaires);
+calculateWealthBtn.addEventListener('click', calculateWealth);
