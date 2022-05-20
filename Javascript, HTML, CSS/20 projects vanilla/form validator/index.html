@@ -5,24 +5,47 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
-    <title>DOM Array Methods</title>
+    <title>Hangman</title>
   </head>
   <body>
-    <h1>DOM Array Methods</h1>
+    <h1>Hangman</h1>
+    <p>Find the hidden word - Enter a letter</p>
+    <div class="game-container">
+      <svg height="250" width="200" class="figure-container">
+        <!-- Rod -->
+        <line x1="60" y1="20" x2="140" y2="20"></line>
+        <line x1="140" y1="20" x2="140" y2="50"></line>
+        <line x1="60" y1="20" x2="60" y2="230"></line>
+        <line x1="20" y1="230" x2="100" y2="230"></line>
 
-    <div class="container">
-      <aside>
-        <button id="add-user">Add User 👱‍♂️</button>
-        <button id="double">Double Money 💰</button>
-        <button id="show-millionaires">Show Only Millionaires 💵</button>
-        <button id="sort">Sort by Richest ↓</button>
-        <button id="calculate-wealth">Calculate entire Wealth 🧮</button>
-      </aside>
-      <main id="main">
-        <h2><strong>Person</strong>Wealth</h2>
-      </main>
+        <!-- Head -->
+        <circle cx="140" cy="70" r="20" class="figure-part"></circle>
+        <!-- Body -->
+        <line x1="140" y1="90" x2="140" y2="150" class="figure-part"></line>
+        <!-- Arms -->
+        <line x1="140" y1="120" x2="120" y2="100" class="figure-part"></line>
+        <line x1="140" y1="120" x2="160" y2="100" class="figure-part"></line>
+        <!-- Legs -->
+        <line x1="140" y1="150" x2="120" y2="180" class="figure-part"></line>
+        <line x1="140" y1="150" x2="160" y2="180" class="figure-part"></line>
+      </svg>
+
+      <div class="wrong-letters-container">
+        <div id="wrong-letters"></div>
+      </div>
+      <div class="word" id="word"></div>
+    </div>
+    <!-- Container for final message -->
+    <div class="popup-container" id="popup-container">
+      <div class="popup">
+        <h2 id="final-message"></h2>
+        <button id="play-button">Play Again</button>
+      </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Notification -->
+    <div class="notification-container" id="notification-container">
+      <p>You have alreade entered this letter</p>
+    </div>
   </body>
 </html>
